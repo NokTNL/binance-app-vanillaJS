@@ -9,7 +9,7 @@ async function fetchLatestTrade() {
 // for testing
 async function fetchAvgPrice() {
   const response = await fetch(
-    "https://api.binance.com/api/v3/avgPrice?symbol=BNBUSDT"
+    "https://api.binance.com/api/v3/avgPrice?symbol=BTCUSDT"
   );
   const obj = await response.json();
   return obj;
@@ -25,6 +25,6 @@ setInterval(() => {
     const priceNum = price && parseFloat(price);
 
     timeEl.textContent = `Time stamp: ${timeString}`;
-    priceEl.textContent = `BNB/USDT: ${priceNum}`;
+    priceEl.textContent = `BTC/USDT: ${priceNum}`;
   });
 }, 1000);

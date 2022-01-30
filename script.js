@@ -1,17 +1,16 @@
-const cryptoType = document.getElementById("crypto-type");
-const fiatType = document.getElementById("fiat-type");
-const timeEl = document.getElementById("time");
-const priceEl = document.getElementById("price");
-
-let socket;
-
 async function fetchLatestTrade(cryptoTypeUpper, fiatTypeUpper) {
-  const response = await fetch(
-    `https://api.binance.com/api/v3/aggTrades?symbol=${cryptoTypeUpper}${fiatTypeUpper}`
-  );
-  const obj = await response.json();
-  const { T, p } = obj[0];
-  handleData(T, p);
+  try {
+    const response = await fetch(
+      `https://api.binance.com/api/v3/aggTrades?symbol=${cryptoTypeUpper}${fiatTypeUpper}`
+    );
+    const obj = await response.json();
+    const { T, p } = obj[0];
+    handleData(T, p);
+  } catch {
+    alert(
+      "Failed to get the info. Maybe the pair you chose is not available on Binance."
+    );
+  }
 }
 
 function addSocket(cryptoTypeUpper, fiatTypeUpper) {
@@ -22,7 +21,8 @@ function addSocket(cryptoTypeUpper, fiatTypeUpper) {
     `wss://stream.binance.com:9443/ws/${crypto}${fiat}@aggTrade`
   );
 
-  socket.onopen = function (e) {
+  socket.onopen = function () {
+    // fetchPrecision(cryptoTypeUpper, fiatTypeUpper);
     fetchLatestTrade(cryptoTypeUpper, fiatTypeUpper); // To get the latest price without waiting new trades to happen
     console.log("[open] Connection established");
   };
@@ -52,7 +52,7 @@ function addSocket(cryptoTypeUpper, fiatTypeUpper) {
 
 function handleData(time, price) {
   const timeString = new Date(time).toLocaleString();
-  const priceNum = parseFloat(price).toFixed(2);
+  const priceNum = parseFloat(price);
 
   timeEl.textContent = `Time stamp: ${timeString}`;
   priceEl.textContent = `${cryptoType.value}/${fiatType.value}: ${priceNum}`;
@@ -68,6 +68,45 @@ function handleTypeChange(event) {
 }
 
 // Main flow
+const cryptoType = document.getElementById("crypto-type");
+const fiatType = document.getElementById("fiat-type");
+const timeEl = document.getElementById("time");
+const priceEl = document.getElementById("price");
+
+const cryptoList = [
+  { symbol: "BTC", name: "Bitcoin" },
+  { symbol: "ETH", name: "Ethereum" },
+  { symbol: "BNB", name: "Binance Coin" },
+  { symbol: "ADA", name: "Cardano" },
+  { symbol: "ATOM", name: "Cosmos" },
+  { symbol: "DOGE", name: "Dogecoin" },
+  { symbol: "LINK", name: "Chainlink" },
+  { symbol: "DOT", name: "Polkadot" },
+  { symbol: "SOL", name: "Solana" },
+  { symbol: "SHIB", name: "SHIBA INU" },
+];
+
+const fiatList = [
+  { symbol: "BUSD", name: "US Dollar" },
+  { symbol: "EUR", name: "Euro" },
+  { symbol: "GBP", name: "British Pound" },
+];
+
+for (coin of cryptoList) {
+  const option = document.createElement("option");
+  option.value = coin.symbol;
+  option.textContent = `${coin.name} (${coin.symbol})`;
+  cryptoType.appendChild(option);
+}
+
+for (coin of fiatList) {
+  const option = document.createElement("option");
+  option.value = coin.symbol;
+  option.textContent = `${coin.name} (${coin.symbol})`;
+  fiatType.appendChild(option);
+}
+
+let socket;
 fetchLatestTrade(cryptoType.value, fiatType.value);
 addSocket(cryptoType.value, fiatType.value);
 

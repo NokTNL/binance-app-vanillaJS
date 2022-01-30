@@ -5,6 +5,15 @@ const priceEl = document.getElementById("price");
 
 let socket;
 
+async function fetchLatestTrade(cryptoTypeUpper, fiatTypeUpper) {
+  const response = await fetch(
+    `https://api.binance.com/api/v3/aggTrades?symbol=${cryptoTypeUpper}${fiatTypeUpper}`
+  );
+  const obj = await response.json();
+  const { T, p } = obj[0];
+  handleData(T, p);
+}
+
 function addSocket(cryptoTypeUpper, fiatTypeUpper) {
   const crypto = cryptoTypeUpper.toLowerCase();
   const fiat = fiatTypeUpper.toLowerCase();
@@ -13,16 +22,15 @@ function addSocket(cryptoTypeUpper, fiatTypeUpper) {
     `wss://stream.binance.com:9443/ws/${crypto}${fiat}@aggTrade`
   );
 
-  timeEl.textContent = `Time stamp: loading...`;
-  priceEl.textContent = `${cryptoTypeUpper}/${fiatTypeUpper}: loading...`;
-
   socket.onopen = function (e) {
+    fetchLatestTrade(cryptoTypeUpper, fiatTypeUpper); // To get the latest price without waiting new trades to happen
     console.log("[open] Connection established");
   };
 
   socket.onmessage = ({ data }) => {
     console.log(`[message] Message received`);
-    handleData(data);
+    const { T, p } = JSON.parse(data);
+    handleData(T, p);
   };
 
   socket.onclose = function (event) {
@@ -42,10 +50,9 @@ function addSocket(cryptoTypeUpper, fiatTypeUpper) {
   };
 }
 
-function handleData(data) {
-  const { p, T } = JSON.parse(data); // data received in JSON
-  const timeString = new Date(T).toLocaleString();
-  const priceNum = parseFloat(p).toFixed(2);
+function handleData(time, price) {
+  const timeString = new Date(time).toLocaleString();
+  const priceNum = parseFloat(price).toFixed(2);
 
   timeEl.textContent = `Time stamp: ${timeString}`;
   priceEl.textContent = `${cryptoType.value}/${fiatType.value}: ${priceNum}`;
@@ -53,11 +60,15 @@ function handleData(data) {
 
 function handleTypeChange(event) {
   console.log(`You have chosen: ${event.target.value}`);
+  timeEl.textContent = `Time stamp: loading...`;
+  priceEl.textContent = `${cryptoType.value}/${fiatType.value}: loading...`;
+
   socket.close();
   addSocket(cryptoType.value, fiatType.value);
 }
 
 // Main flow
+fetchLatestTrade(cryptoType.value, fiatType.value);
 addSocket(cryptoType.value, fiatType.value);
 
 fiatType.addEventListener("change", handleTypeChange);

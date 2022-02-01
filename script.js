@@ -23,10 +23,10 @@ const fiatList = [
 async function fetchLatestTrade(cryptoTypeUpper, fiatTypeUpper) {
   try {
     const response = await fetch(
-      `https://api.binance.com/api/v3/aggTrades?symbol=${cryptoTypeUpper}${fiatTypeUpper}`
+      `https://api.binance.com/api/v3/trades?symbol=${cryptoTypeUpper}${fiatTypeUpper}`
     );
     const obj = await response.json();
-    const { T: time, p: price } = obj[0];
+    const { time, price } = obj[obj.length - 1];
     DOMMod.updateData(time, price);
   } catch {
     alert(
@@ -44,7 +44,7 @@ const socketMod = (function () {
     const fiat = fiatTypeUpper.toLowerCase();
 
     _socket = new WebSocket(
-      `wss://stream.binance.com:9443/ws/${crypto}${fiat}@aggTrade`
+      `wss://stream.binance.com:9443/ws/${crypto}${fiat}@trade`
     );
 
     _socket.onopen = function () {
